@@ -78,11 +78,13 @@ export default function UserRoutes(app) {
         const token = jwt.sign({ user }, config.tokenSecret, {
           expiresIn: config.tokenExpiration,
         });
+        console.log("Token created in routes is: ", token)
         // Set cookies for user
         res.cookie("token", token, {
             maxAge: config.tokenExpiration,
             httpOnly: true,
             });
+        
         res.json({
           user,
           accessToken: token,
