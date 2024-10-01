@@ -125,6 +125,8 @@ app.get("/auth/token", async (req, res) => {
     res.cookie("token", token, {
       maxAge: config.tokenExpiration,
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",  // Set secure to true if using HTTPS
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax" 
     });
     res.json({
       user,
