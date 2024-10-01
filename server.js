@@ -166,8 +166,11 @@ app.get("/auth/logged_in", (req, res) => {
 
 app.post("/auth/logout", (_, res) => {
   // clear cookie
-  res.clearCookie("token").json({ message: "Logged out" });
-});
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",  // Same secure setting as when setting the cookie
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",  // SameSite must match
+  }).json({ message: "Logged out" });});
 
 app.get("/user/posts", auth, async (_, res) => {
   try {
