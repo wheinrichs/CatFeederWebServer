@@ -67,12 +67,12 @@ app.use(cookieParser());
 const auth = (req, res, next) => {
   try {
     const token = req.cookies.token;
-    if (!token) return res.status(401).json({ message: "Unauthorized" });
+    if (!token) return res.status(401).json({ message: "Unauthorized no token" });
     jwt.verify(token, config.tokenSecret);
     return next();
   } catch (err) {
     console.error("Error: ", err);
-    res.status(401).json({ message: "Unauthorized" });
+    res.status(401).json({ message: "Unauthorized error" });
   }
 };
 
@@ -138,8 +138,12 @@ app.get("/auth/token", async (req, res) => {
 
 app.get("/auth/logged_in", (req, res) => {
   try {
+    console.log("Made it in the loggind in")
+
     // Get token from cookie
     const token = req.cookies.token;
+
+    console.log("Token is: ", token)
     if (!token) return res.json({ loggedIn: false });
     console.log(token)
     const { user } = jwt.verify(token, config.tokenSecret);
