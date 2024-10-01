@@ -79,12 +79,14 @@ export default function UserRoutes(app) {
           expiresIn: config.tokenExpiration,
         });
         console.log("Token created in routes is: ", token)
+        console.log(process.env.NODE_ENV === "production")
+
         // Set cookies for user
         res.cookie("token", token, {
             maxAge: config.tokenExpiration,
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",  // Set secure to true if using HTTPS
-            sameSite: "None" 
+            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax" 
             });
         
         res.json({

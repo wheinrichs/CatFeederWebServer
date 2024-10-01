@@ -156,7 +156,7 @@ app.get("/auth/logged_in", (req, res) => {
       maxAge: config.tokenExpiration,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",  // Set secure to true if using HTTPS
-      sameSite: "None" 
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax" 
     });
     res.json({ loggedIn: true, user });
   } catch (err) {
