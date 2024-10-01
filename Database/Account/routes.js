@@ -83,6 +83,8 @@ export default function UserRoutes(app) {
         res.cookie("token", token, {
             maxAge: config.tokenExpiration,
             httpOnly: true,
+            secure: process.env.NODE_ENV === "production",  // Set secure to true if using HTTPS
+            sameSite: "None" 
             });
         
         res.json({
