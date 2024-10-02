@@ -4,7 +4,6 @@ import cors from "cors";
 import axios from "axios";
 import queryString from "query-string";
 import jwt from "jsonwebtoken";
-import cookieParser from "cookie-parser";
 import mongoose from "mongoose";
 import UserRoutes from "./Database/Account/routes.js";
 import ScheduleRoutes from "./Database/Schedule/routes.js";
@@ -61,20 +60,7 @@ app.use(
 );
 
 // Parse Cookie
-app.use(cookieParser());
 
-// Verify auth
-const auth = (req, res, next) => {
-  try {
-    const token = req.cookies.token;
-    if (!token) return res.status(401).json({ message: "Unauthorized no token" });
-    jwt.verify(token, config.tokenSecret);
-    return next();
-  } catch (err) {
-    console.error("Error: ", err);
-    res.status(401).json({ message: "Unauthorized error" });
-  }
-};
 
 app.get("/auth/url", (_, res) => {
   res.json({
@@ -122,12 +108,6 @@ app.get("/auth/token", async (req, res) => {
       expiresIn: config.tokenExpiration,
     });
     // Set cookies for user
-    res.cookie("token", token, {
-      maxAge: config.tokenExpiration,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",  // Set secure to true if using HTTPS
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax" 
-    });
     res.json({
       user,
       accessToken: token
@@ -143,7 +123,8 @@ app.get("/auth/logged_in", (req, res) => {
     console.log("Made it in the loggind in")
 
     // Get token from cookie
-    const token = req.cookies.token;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
     console.log("Token is: ", token)
     if (!token) return res.json({ loggedIn: false });
@@ -153,13 +134,7 @@ app.get("/auth/logged_in", (req, res) => {
     const newToken = jwt.sign({ user }, config.tokenSecret, {
       expiresIn: config.tokenExpiration,
     });
-    // Reset token in cookie
-    res.cookie("token", newToken, {
-      maxAge: config.tokenExpiration,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",  // Set secure to true if using HTTPS
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax" 
-    });
+
     res.json({ loggedIn: true, user });
   } catch (err) {
     res.json({ loggedIn: false });
@@ -168,13 +143,9 @@ app.get("/auth/logged_in", (req, res) => {
 
 app.post("/auth/logout", (_, res) => {
   // clear cookie
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",  // Same secure setting as when setting the cookie
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",  // SameSite must match
-  }).json({ message: "Logged out" });});
+  res.json({ message: "Logged out" });});
 
-app.get("/user/posts", auth, async (_, res) => {
+app.get("/user/posts", async (_, res) => {
   try {
     const { data } = await axios.get(config.postUrl);
     res.json({ posts: data?.slice(0, 5) });
