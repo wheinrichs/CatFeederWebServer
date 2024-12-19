@@ -31,7 +31,7 @@ const authParams = queryString.stringify({
   client_id: config.clientId,
   redirect_uri: config.redirectUrl,
   response_type: "code",
-  scope: "openid profile email",
+  scope: "openid profile email https://www.googleapis.com/auth/drive.readonly",
   access_type: "offline",
   state: "standard_oauth",
   prompt: "consent",
@@ -79,9 +79,9 @@ app.get("/auth/token", async (req, res) => {
     const tokenParam = getTokenParams(code);
     // Exchange authorization code for access token (id token is returned here too)
     const {
-      data: { id_token },
+      data: { id_token, access_token },
     } = await axios.post(`${config.tokenUrl}?${tokenParam}`);
-    if (!id_token) return res.status(400).json({ message: "Auth error" });
+    if (!id_token || !access_token) return res.status(400).json({ message: "Auth error" });
     // Get user info from id token
     const { email, name, picture, sub } = jwt.decode(id_token);
     // THIS SUB IS THE UNIQUE USER ID TO STORE THE USER DATA
@@ -110,7 +110,8 @@ app.get("/auth/token", async (req, res) => {
     // Set cookies for user
     res.json({
       user,
-      accessToken: token
+      sessionToken: token,
+      accessToken: access_token
     });
   } catch (err) {
     console.error("Error: ", err);
@@ -151,6 +152,61 @@ app.get("/user/posts", async (_, res) => {
     res.json({ posts: data?.slice(0, 5) });
   } catch (err) {
     console.error("Error: ", err);
+  }
+});
+
+app.post("/api/getFolderID", async(req, res) => {
+  const {folderName, accessToken} = req.body
+  try {
+    console.log("folder name is ", folderName)
+    console.log("Token is: ", accessToken)
+    const response = await axios.get(
+      `https://www.googleapis.com/drive/v3/files?q=name='${folderName}' and mimeType='application/vnd.google-apps.folder'&fields=files(id,name)`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    const folders = response.data.files;
+
+    if (folders.length === 0) {
+      return res.status(404).json({ message: `Folder with name ${folderName} not found` });
+    }
+
+    // Return the folder ID
+    res.json({ folderId: folders[0].id });
+  } catch (error) {
+    console.error("Error fetching folder ID:", error);
+    res.status(500).json({ message: "Error fetching folder ID" });
+  }
+})
+
+app.get("/api/video/:id", async (req, res) => {
+  const { id } = req.params;
+  const accessToken = req.query.accessToken;
+
+  if (!accessToken) {
+    return res.status(400).send("Missing access token");
+  }
+
+  try {
+    const response = await axios.get(
+      `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        responseType: "stream", // Stream the video to the client
+      }
+    );
+
+    res.setHeader("Content-Type", response.headers["content-type"]);
+    response.data.pipe(res); // Pipe the video stream to the client
+  } catch (error) {
+    console.error("Error fetching video:", error.response?.data || error);
+    res.status(500).send("Error fetching video");
   }
 });
 
