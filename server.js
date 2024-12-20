@@ -191,24 +191,71 @@ app.get("/api/video/:id", async (req, res) => {
     return res.status(400).send("Missing access token");
   }
 
+  const range = req.headers.range;
+  if (!range) {
+    return res.status(416).send("Requires Range header");
+  }
+
   try {
-    const response = await axios.get(
-      `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+    // Fetch video metadata
+    const metadataResponse = await axios.get(
+      `https://www.googleapis.com/drive/v3/files/${id}?fields=size,mimeType`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-        responseType: "stream", // Stream the video to the client
       }
     );
 
-    res.setHeader("Content-Type", response.headers["content-type"]);
-    response.data.pipe(res); // Pipe the video stream to the client
+    const videoSize = parseInt(metadataResponse.data.size, 10);
+    const mimeType = metadataResponse.data.mimeType;
+
+    // Parse the Range header
+    const CHUNK_SIZE = 512 * 1024; // 512 KB chunk size
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : Math.min(start + CHUNK_SIZE - 1, videoSize - 1);
+
+    if (start >= videoSize) {
+      res.status(416).set({
+        "Content-Range": `bytes */${videoSize}`,
+      });
+      return;
+    }
+
+    const contentLength = end - start + 1;
+
+    // Set headers for partial content
+    const headers = {
+      "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+      "Accept-Ranges": "bytes",
+      "Content-Length": contentLength,
+      "Content-Type": mimeType,
+    };
+
+    res.writeHead(206, headers);
+
+    // Stream the requested chunk
+    const videoStreamResponse = await axios.get(
+      `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Range: `bytes=${start}-${end}`,
+        },
+        responseType: "stream",
+      }
+    );
+
+    videoStreamResponse.data.pipe(res);
   } catch (error) {
     console.error("Error fetching video:", error.response?.data || error);
     res.status(500).send("Error fetching video");
   }
 });
+
+
+
 
 const PORT = process.env.PORT || 4000;
 
