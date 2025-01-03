@@ -140,7 +140,7 @@ export default function UserRoutes(app) {
         // Return the user and the accessToken
         res.json({
           user,
-          accessToken: token,
+          sessionToken: token,
         });
       }
     }
