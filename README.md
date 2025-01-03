@@ -10,13 +10,11 @@ This repo defines the back end server logic that communicates with the front end
 https://petfeeder.netlify.app/
 
 This server uses Node.js as the
-backend server implementation. It handles token distribution, google OAuth 2.0, google drive interfaces, and all login requests.
-
-
+backend server implementation. It handles [token distribution](server.js), google OAuth 2.0, google drive interfaces, and all login requests.
 
 In addition to running the server main functions, it also defines the model, schema, routes, and DAO for
 both the user accounts and the user schedules. The user and schedule information is stores in a mongoDB 
 database and managed via mongoose. All passwords are encrypted using bcrypt before being stored in the 
 database. 
 
-[View my portfolio here](www.winstonheinrichs.com)
+[View my portfolio here](https://www.winstonheinrichs.com)
