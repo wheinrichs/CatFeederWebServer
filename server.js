@@ -23,7 +23,7 @@ const config = {
 
   // Set the token secret and the token expiration
   tokenSecret: process.env.TOKEN_SECRET,
-  tokenExpiration: 36000,
+  tokenExpiration: 3600,
 };
 
 // Setup express for the server app
