@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 // Set the token expiration and the token secret parameters
 const config = {
   tokenSecret: process.env.TOKEN_SECRET,
-  tokenExpiration: 36000,
+  tokenExpiration: 3600,
 };
 
 export default function UserRoutes(app) {
