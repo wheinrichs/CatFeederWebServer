@@ -6,7 +6,8 @@ const usersSchema = new mongoose.Schema({
     loginMethod: String,
     password: String,
     username: String,
-    sub: String
+    sub: String,
+    liveFeedAccess: Boolean,
 },
 {collection: "users"});
 export default usersSchema;

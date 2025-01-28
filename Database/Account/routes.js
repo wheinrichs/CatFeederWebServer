@@ -66,7 +66,7 @@ export default function UserRoutes(app) {
       // Encrypt the password using bcrypt
       const hash = await bcrypt.hash(user.password, 12);
       // Create a new user with the password replaced with the hashed password and the loginMethod as website
-      const updatedUser = { ...user, password: hash, loginMethod: "website" };
+      const updatedUser = { ...user, password: hash, loginMethod: "website", liveFeedAccess: false };
       // Create the user using the updatedUser
       const createdUser = await dao.createUser(updatedUser);
       // Create a schedule with the user id that is created

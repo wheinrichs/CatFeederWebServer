@@ -88,7 +88,7 @@ Output:
       // Sub is the user ID stored in google
       let user = { name, email, picture, sub };
       // Write the user information and the login method (google in this case) to the database
-      const updatedUser = { ...user, loginMethod: "google" };
+      const updatedUser = { ...user, loginMethod: "google", liveFeedAccess: false };
       // Look for a user with this unique google ID to see if the user has logged in on this site before
       const userFound = await dao.findUserBySub(updatedUser.sub);
       // If the user is not found then this google account has not accesses this site before
